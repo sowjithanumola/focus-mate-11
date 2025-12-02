@@ -1,0 +1,20 @@
+{
+  "short_name": "FocusMate",
+  "name": "FocusMate Study Tracker",
+  "icons": [
+    {
+      "src": "https://ui-avatars.com/api/?name=FM&background=4f46e5&color=fff&length=2&size=192&rounded=true",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "https://ui-avatars.com/api/?name=FM&background=4f46e5&color=fff&length=2&size=512&rounded=true",
+      "type": "image/png",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#ffffff",
+  "background_color": "#ffffff"
+}
