@@ -6,7 +6,7 @@ const USERS_DB_KEY = 'focusmate_users_db';
 
 interface StoredUser extends User {
   password?: string; // Optional for Google users
-  authProvider: 'email' | 'google' | 'guest';
+  authProvider: 'email' | 'guest';
   createdAt: number;
 }
 
@@ -70,58 +70,12 @@ export const loginUser = (email: string, password: string): User => {
   if (!user) {
     throw new Error("No account found. Please Sign Up first.");
   }
-  
-  if (user.authProvider === 'google') {
-    throw new Error("Please sign in with Google.");
-  }
 
   if (user.password !== password) {
     throw new Error("Incorrect password.");
   }
 
   const { password: _, ...sessionUser } = user;
-  localStorage.setItem(USER_SESSION_KEY, JSON.stringify(sessionUser));
-  return sessionUser;
-};
-
-export const loginWithGoogle = (): User => {
-  // Simulate Google Auth Response
-  const googleProfile = {
-    email: "demo.student@gmail.com",
-    name: "Demo Student",
-    avatar: "https://lh3.googleusercontent.com/a/default-user=s96-c" // Generic Google placeholder
-  };
-
-  const existingUser = findUserByEmail(googleProfile.email);
-  
-  let userToSave: StoredUser;
-
-  if (existingUser) {
-    // Detect if the name is the old "Alex (Google)" and fix it, otherwise keep existing name
-    const currentName = existingUser.name === "Alex (Google)" ? "Demo Student" : existingUser.name;
-
-    // Update existing user login
-    userToSave = {
-      ...existingUser,
-      name: currentName, 
-      avatar: googleProfile.avatar,
-      authProvider: 'google'
-    };
-  } else {
-    // Create new Google user
-    userToSave = {
-      id: btoa(googleProfile.email),
-      email: googleProfile.email,
-      name: googleProfile.name,
-      avatar: googleProfile.avatar,
-      authProvider: 'google',
-      createdAt: Date.now()
-    };
-  }
-
-  saveUserToDB(userToSave);
-
-  const { password: _, ...sessionUser } = userToSave;
   localStorage.setItem(USER_SESSION_KEY, JSON.stringify(sessionUser));
   return sessionUser;
 };
