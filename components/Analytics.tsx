@@ -56,9 +56,13 @@ export const Analytics: React.FC = () => {
     try {
       const result = await analyzeProgress(entries);
       setAnalysis(result);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      setError("Failed to generate AI report. Please try again.");
+      if (err.message && err.message.includes("API Key")) {
+        setError("Missing API Key. Please configure your environment variables.");
+      } else {
+        setError("Failed to generate AI report. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -126,7 +130,8 @@ export const Analytics: React.FC = () => {
             )}
 
             {error && (
-              <div className="p-4 bg-red-50 text-red-600 rounded-xl text-sm text-center">
+              <div className="p-4 bg-red-50 text-red-600 rounded-xl text-sm text-center flex items-center justify-center gap-2">
+                <AlertTriangle className="w-4 h-4" />
                 {error}
               </div>
             )}
