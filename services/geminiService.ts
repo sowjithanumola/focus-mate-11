@@ -2,9 +2,10 @@ import { GoogleGenAI, Type, Chat, GenerateContentResponse } from "@google/genai"
 import { DailyEntry, AIAnalysis } from "../types";
 
 const getAIClient = () => {
+  // Access the API key injected by Vite
   const apiKey = process.env.API_KEY;
-  if (!apiKey) {
-    throw new Error("API Key not found in environment variables.");
+  if (!apiKey || apiKey.includes("API_KEY")) {
+    throw new Error("API Key is missing or invalid. Please check your .env file or Vercel settings.");
   }
   return new GoogleGenAI({ apiKey });
 };
@@ -23,6 +24,7 @@ export const createCoachChat = async (recentEntries: DailyEntry[]): Promise<Chat
       })))
     : "No recent logs found.";
 
+  // Use ai.chats.create with the specific model
   return ai.chats.create({
     model: 'gemini-2.5-flash',
     config: {
@@ -45,11 +47,12 @@ export const createCoachChat = async (recentEntries: DailyEntry[]): Promise<Chat
 };
 
 export const sendMessageToCoach = async (chat: Chat, message: string): Promise<string> => {
+  // Use sendMessage for chat interactions
   const response: GenerateContentResponse = await chat.sendMessage({ message });
   return response.text || "I'm having trouble thinking right now. Try again?";
 };
 
-// Analysis Service (Existing)
+// Analysis Service
 export const analyzeProgress = async (entries: DailyEntry[]): Promise<AIAnalysis> => {
   const ai = getAIClient();
   
@@ -68,6 +71,7 @@ export const analyzeProgress = async (entries: DailyEntry[]): Promise<AIAnalysis
     Data: ${JSON.stringify(dataSummary)}
   `;
 
+  // Use ai.models.generateContent with model defined in the call
   const response = await ai.models.generateContent({
     model: 'gemini-2.5-flash',
     contents: prompt,
