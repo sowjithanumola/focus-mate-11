@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Bot, User as UserIcon, Loader2, Sparkles } from 'lucide-react';
+import { Send, Bot, User as UserIcon, Loader2, Sparkles, AlertTriangle } from 'lucide-react';
 import { ChatMessage } from '../types';
 import { getRecentEntries } from '../services/storageService';
 import { createCoachChat, sendMessageToCoach } from '../services/geminiService';
@@ -10,12 +10,14 @@ export const AICoach: React.FC = () => {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [chatSession, setChatSession] = useState<Chat | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     // Initialize chat with history context
     const initChat = async () => {
       setIsLoading(true);
+      setError(null);
       try {
         const recentLogs = getRecentEntries(5);
         const chat = await createCoachChat(recentLogs);
@@ -28,12 +30,18 @@ export const AICoach: React.FC = () => {
           text: "Hi! I'm your FocusMate Coach. I've looked at your recent study logs. How can I help you improve today?",
           timestamp: Date.now()
         }]);
-      } catch (e) {
+      } catch (e: any) {
         console.error("Failed to start chat", e);
+        const errorMessage = e.message || "Unknown error";
+        
+        if (errorMessage.includes("API Key")) {
+           setError("API Key is missing. Please add your Google Gemini API Key to the environment variables.");
+        }
+        
         setMessages([{
           id: 'error',
           role: 'model',
-          text: "I'm having trouble connecting right now. Please try again later.",
+          text: "I'm having trouble connecting right now. Please check your connection or API settings.",
           timestamp: Date.now()
         }]);
       } finally {
@@ -98,6 +106,12 @@ export const AICoach: React.FC = () => {
           AI Coach
         </h2>
         <p className="text-slate-500 text-sm">Chat about your progress, study tips, or motivation.</p>
+        {error && (
+          <div className="mt-2 p-3 bg-red-50 text-red-600 rounded-xl text-sm border border-red-100 flex items-start gap-2">
+            <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
+            <span>{error}</span>
+          </div>
+        )}
       </div>
 
       <div className="flex-1 bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
