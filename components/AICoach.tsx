@@ -1,11 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Send, Bot, User as UserIcon, Loader2, Sparkles, AlertTriangle } from 'lucide-react';
-import { ChatMessage } from '../types';
+import { ChatMessage, User } from '../types';
 import { getRecentEntries } from '../services/storageService';
 import { createCoachChat, sendMessageToCoach } from '../services/geminiService';
 import { Chat } from "@google/genai";
 
-export const AICoach: React.FC = () => {
+interface AICoachProps {
+  user: User;
+}
+
+export const AICoach: React.FC<AICoachProps> = ({ user }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -20,14 +24,16 @@ export const AICoach: React.FC = () => {
       setError(null);
       try {
         const recentLogs = getRecentEntries(5);
-        const chat = await createCoachChat(recentLogs);
+        // Pass user name for personalization
+        const chat = await createCoachChat(recentLogs, user.name);
         setChatSession(chat);
         
-        // Initial greeting
+        // Initial greeting personalized with first name
+        const firstName = user.name.split(' ')[0];
         setMessages([{
           id: 'welcome',
           role: 'model',
-          text: "Hi! I'm your FocusMate Coach. I've looked at your recent study logs. How can I help you improve today?",
+          text: `Hi ${firstName}! I'm your FocusMate Coach. I've reviewed your recent progress. How can I support your study goals today?`,
           timestamp: Date.now()
         }]);
       } catch (e: any) {
@@ -50,7 +56,7 @@ export const AICoach: React.FC = () => {
     };
 
     initChat();
-  }, []);
+  }, [user.name]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });

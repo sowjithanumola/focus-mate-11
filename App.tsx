@@ -32,6 +32,9 @@ const App: React.FC = () => {
   };
 
   const renderView = () => {
+    // Safety check for views that require user
+    if (!user) return null;
+
     switch (currentView) {
       case ViewState.DAILY_LOG:
         return <DailyLog onEntrySaved={() => setCurrentView(ViewState.ANALYTICS)} />;
@@ -40,7 +43,7 @@ const App: React.FC = () => {
       case ViewState.HISTORY:
         return <History />;
       case ViewState.AI_COACH:
-        return <AICoach />;
+        return <AICoach user={user} />;
       default:
         return <DailyLog onEntrySaved={() => setCurrentView(ViewState.ANALYTICS)} />;
     }
