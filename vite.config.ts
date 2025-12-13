@@ -8,8 +8,8 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [react()],
     define: {
-      // Replaces 'process.env.API_KEY' specifically with the string value
-      'process.env.API_KEY': JSON.stringify(env.API_KEY),
+      // Prioritize process.env.API_KEY (system env) then fallback to loaded .env file
+      'process.env.API_KEY': JSON.stringify(process.env.API_KEY || env.API_KEY),
       // Prevents "ReferenceError: process is not defined" for other libs accessing process.env
       'process.env': {}
     },

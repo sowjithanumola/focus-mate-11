@@ -4,9 +4,12 @@ import { DailyEntry, AIAnalysis } from "../types";
 const getAIClient = () => {
   // Access the API key injected by Vite
   const apiKey = process.env.API_KEY;
-  if (!apiKey || apiKey.includes("API_KEY")) {
-    throw new Error("API Key is missing or invalid. Please check your .env file or Vercel settings.");
+  
+  // Basic validation: must exist and be a string
+  if (!apiKey || typeof apiKey !== 'string' || apiKey.trim() === '') {
+    throw new Error("API Key is missing. Please check your .env file or Vercel settings.");
   }
+  
   return new GoogleGenAI({ apiKey });
 };
 

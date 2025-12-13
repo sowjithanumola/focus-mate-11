@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Send, Bot, User as UserIcon, Loader2, Sparkles, AlertTriangle } from 'lucide-react';
+import { Send, Bot, User as UserIcon, Loader2, Sparkles, AlertTriangle, RefreshCw } from 'lucide-react';
 import { ChatMessage, User } from '../types';
 import { getRecentEntries } from '../services/storageService';
 import { createCoachChat, sendMessageToCoach } from '../services/geminiService';
@@ -17,44 +17,47 @@ export const AICoach: React.FC<AICoachProps> = ({ user }) => {
   const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    // Initialize chat with history context
-    const initChat = async () => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const recentLogs = getRecentEntries(5);
-        // Pass user name for personalization
-        const chat = await createCoachChat(recentLogs, user.name);
-        setChatSession(chat);
-        
-        // Initial greeting personalized with first name
-        const firstName = user.name.split(' ')[0];
-        setMessages([{
-          id: 'welcome',
-          role: 'model',
-          text: `Hi ${firstName}! I'm your FocusMate Coach. I've reviewed your recent progress. How can I support your study goals today?`,
-          timestamp: Date.now()
-        }]);
-      } catch (e: any) {
-        console.error("Failed to start chat", e);
-        const errorMessage = e.message || "Unknown error";
-        
-        if (errorMessage.includes("API Key")) {
-           setError("API Key is missing. Please add your Google Gemini API Key to the environment variables.");
-        }
-        
-        setMessages([{
-          id: 'error',
-          role: 'model',
-          text: "I'm having trouble connecting right now. Please check your connection or API settings.",
-          timestamp: Date.now()
-        }]);
-      } finally {
-        setIsLoading(false);
+  const initChat = async () => {
+    setIsLoading(true);
+    setError(null);
+    setMessages([]); // Clear previous error messages if any
+    try {
+      const recentLogs = getRecentEntries(5);
+      // Pass user name for personalization
+      const chat = await createCoachChat(recentLogs, user.name);
+      setChatSession(chat);
+      
+      // Initial greeting personalized with first name
+      const firstName = user.name.split(' ')[0];
+      setMessages([{
+        id: 'welcome',
+        role: 'model',
+        text: `Hi ${firstName}! I'm your FocusMate Coach. I've reviewed your recent progress. How can I support your study goals today?`,
+        timestamp: Date.now()
+      }]);
+    } catch (e: any) {
+      console.error("Failed to start chat", e);
+      const errorMessage = e.message || "Unknown error";
+      
+      let displayError = "I'm having trouble connecting right now. Please check your connection or API settings.";
+      if (errorMessage.includes("API Key")) {
+         displayError = "API Key is missing. Please add your Google Gemini API Key to the environment variables.";
       }
-    };
+      
+      setError(displayError);
+      
+      setMessages([{
+        id: 'error',
+        role: 'model',
+        text: displayError,
+        timestamp: Date.now()
+      }]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  useEffect(() => {
     initChat();
   }, [user.name]);
 
@@ -113,9 +116,19 @@ export const AICoach: React.FC<AICoachProps> = ({ user }) => {
         </h2>
         <p className="text-slate-500 text-sm">Chat about your progress, study tips, or motivation.</p>
         {error && (
-          <div className="mt-2 p-3 bg-red-50 text-red-600 rounded-xl text-sm border border-red-100 flex items-start gap-2">
-            <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
-            <span>{error}</span>
+          <div className="mt-2 p-3 bg-red-50 text-red-600 rounded-xl text-sm border border-red-100 flex items-center justify-between gap-2">
+            <div className="flex items-start gap-2">
+              <AlertTriangle className="w-4 h-4 mt-0.5 shrink-0" />
+              <span>{error}</span>
+            </div>
+            {!error.includes("API Key") && (
+              <button 
+                onClick={initChat} 
+                className="px-3 py-1 bg-white border border-red-200 rounded-lg hover:bg-red-50 text-xs font-semibold flex items-center gap-1 transition-colors"
+              >
+                <RefreshCw className="w-3 h-3" /> Retry
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -136,7 +149,7 @@ export const AICoach: React.FC<AICoachProps> = ({ user }) => {
               <div className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
                 msg.role === 'user' 
                   ? 'bg-primary-600 text-white rounded-tr-none shadow-md shadow-primary-500/10' 
-                  : 'bg-white text-slate-700 border border-slate-200 rounded-tl-none shadow-sm'
+                  : (msg.id === 'error' ? 'bg-red-50 text-red-700 border border-red-100' : 'bg-white text-slate-700 border border-slate-200') + ' rounded-tl-none shadow-sm'
               }`}>
                 {msg.text}
               </div>
@@ -154,7 +167,7 @@ export const AICoach: React.FC<AICoachProps> = ({ user }) => {
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ask for advice..."
               disabled={isLoading || !chatSession}
-              className="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all text-sm"
+              className="flex-1 px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all text-sm disabled:opacity-50 disabled:bg-slate-50"
             />
             <button
               type="submit"
